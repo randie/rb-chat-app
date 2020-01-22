@@ -1,0 +1,8 @@
+.cache
+.vscode
+**/*/package.json
+**/*/package-lock.json
+client/public
+client/node_modules
+server/data
+server/node_modules
