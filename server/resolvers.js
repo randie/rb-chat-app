@@ -1,4 +1,4 @@
-const db = require('./db');
+import { messages as _messages } from './db';
 
 function requireAuth(userId) {
   if (!userId) {
@@ -9,16 +9,16 @@ function requireAuth(userId) {
 const Query = {
   messages: (_root, _args, { userId }) => {
     requireAuth(userId);
-    return db.messages.list();
+    return _messages.list();
   },
 };
 
 const Mutation = {
   addMessage: (_root, { input }, { userId }) => {
     requireAuth(userId);
-    const messageId = db.messages.create({ from: userId, text: input.text });
-    return db.messages.get(messageId);
+    const messageId = _messages.create({ from: userId, text: input.text });
+    return _messages.get(messageId);
   },
 };
 
-module.exports = { Query, Mutation };
+export default { Query, Mutation };

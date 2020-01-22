@@ -1,11 +1,12 @@
-const fs = require('fs');
-const { ApolloServer } = require('apollo-server-express');
-const bodyParser = require('body-parser');
-const cors = require('cors');
-const express = require('express');
-const expressJwt = require('express-jwt');
-const jwt = require('jsonwebtoken');
-const db = require('./db');
+import { readFileSync } from 'fs';
+import { ApolloServer } from 'apollo-server-express';
+import { json } from 'body-parser';
+import cors from 'cors';
+import express from 'express';
+import expressJwt from 'express-jwt';
+import { sign } from 'jsonwebtoken';
+import { users } from './db';
+import resolvers from './resolvers';
 
 const port = 9000;
 const jwtSecret = Buffer.from('xkMBdsE+P6242Z2dPV3RD91BPbLIko7t', 'base64');
@@ -13,15 +14,14 @@ const jwtSecret = Buffer.from('xkMBdsE+P6242Z2dPV3RD91BPbLIko7t', 'base64');
 const app = express();
 app.use(
   cors(),
-  bodyParser.json(),
+  json(),
   expressJwt({
     credentialsRequired: false,
     secret: jwtSecret,
   })
 );
 
-const typeDefs = fs.readFileSync('./schema.graphql', { encoding: 'utf8' });
-const resolvers = require('./resolvers');
+const typeDefs = readFileSync('./schema.graphql', { encoding: 'utf8' });
 
 function context({ req }) {
   if (req && req.user) {
@@ -35,12 +35,12 @@ apolloServer.applyMiddleware({ app, path: '/graphql' });
 
 app.post('/login', (req, res) => {
   const { name, password } = req.body;
-  const user = db.users.get(name);
+  const user = users.get(name);
   if (!(user && user.password === password)) {
     res.sendStatus(401);
     return;
   }
-  const token = jwt.sign({ sub: user.id }, jwtSecret);
+  const token = sign({ sub: user.id }, jwtSecret);
   res.send({ token });
 });
 
