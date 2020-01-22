@@ -1,3 +1,4 @@
+import http from 'http';
 import { readFileSync } from 'fs';
 import { ApolloServer } from 'apollo-server-express';
 import { json } from 'body-parser';
@@ -44,4 +45,8 @@ app.post('/login', (req, res) => {
   res.send({ token });
 });
 
-app.listen(port, () => console.log(`server is listening on http://localhost:${port}/graphql`));
+const httpServer = http.createServer(app);
+apolloServer.installSubscriptionHandlers(httpServer);
+httpServer.listen(port, () =>
+  console.log(`server is listening on http://localhost:${port}/graphql`)
+);
