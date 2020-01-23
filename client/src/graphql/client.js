@@ -1,22 +1,33 @@
-import { ApolloClient, ApolloLink, HttpLink, InMemoryCache } from 'apollo-boost';
+import { ApolloClient, ApolloLink, HttpLink, InMemoryCache, split } from 'apollo-boost';
+import { WebSocketLink } from 'apollo-link-ws';
+import { getMainDefinition } from 'apollo-utilities';
 import { getAccessToken } from '../auth';
 
-const endpointUrl = 'http://localhost:9000/graphql';
+const httpUrl = 'http://localhost:9000/graphql';
+const wsUrl = 'ws://localhost:9000/graphql';
 
-const authLink = new ApolloLink((operation, forward) => {
-  const token = getAccessToken();
-  if (token) {
-    operation.setContext({
-      headers: { authorization: `Bearer ${token}` },
-    });
-  }
-  return forward(operation);
-});
+const httpLink = ApolloLink.from([
+  new ApolloLink((operation, forward) => {
+    const token = getAccessToken();
+    if (token) {
+      operation.setContext({
+        headers: { authorization: `Bearer ${token}` },
+      });
+    }
+    return forward(operation);
+  }),
+  new HttpLink({ uri: httpUrl, options: { lazy: true, reconnect: true } }),
+]);
 
-const httpLink = new HttpLink({ uri: endpointUrl });
+const wsLink = new WebSocketLink({ uri: wsUrl });
+
+function isSubscription(operation) {
+  const definition = getMainDefinition(operation.query);
+  return definition.kind === 'OperationDefinition' && definition.operation === 'subscription';
+}
 
 const client = new ApolloClient({
-  link: ApolloLink.from([authLink, httpLink]),
+  link: split(isSubscription, wsLink, httpLink),
   cache: new InMemoryCache(),
   defaultOptions: { query: { fetchPolicy: 'no-cache' } },
 });
