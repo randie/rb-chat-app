@@ -1,4 +1,9 @@
+import { PubSub } from 'graphql-subscriptions';
 import { messages as _messages } from './db';
+
+const pubSub = new PubSub();
+
+const MESSAGE_ADDED = 'MESSAGE_ADDED';
 
 function requireAuth(userId) {
   if (!userId) {
@@ -17,8 +22,16 @@ const Mutation = {
   addMessage: (_root, { input }, { userId }) => {
     requireAuth(userId);
     const messageId = _messages.create({ from: userId, text: input.text });
-    return _messages.get(messageId);
+    const message = _messages.get(messageId);
+    pubSub.publish(MESSAGE_ADDED, { messageAdded: message });
+    return message;
   },
 };
 
-export default { Query, Mutation };
+const Subscription = {
+  messageAdded: {
+    subscribe: () => pubSub.asyncIterator(MESSAGE_ADDED),
+  },
+};
+
+export default { Query, Mutation, Subscription };
