@@ -16,10 +16,10 @@ const httpLink = ApolloLink.from([
     }
     return forward(operation);
   }),
-  new HttpLink({ uri: httpUrl, options: { lazy: true, reconnect: true } }),
+  new HttpLink({ uri: httpUrl }),
 ]);
 
-const wsLink = new WebSocketLink({ uri: wsUrl });
+const wsLink = new WebSocketLink({ uri: wsUrl, options: { lazy: true, reconnect: true } });
 
 function isSubscription(operation) {
   const definition = getMainDefinition(operation.query);
