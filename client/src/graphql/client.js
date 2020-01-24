@@ -19,7 +19,14 @@ const httpLink = ApolloLink.from([
   new HttpLink({ uri: httpUrl }),
 ]);
 
-const wsLink = new WebSocketLink({ uri: wsUrl, options: { lazy: true, reconnect: true } });
+const wsLink = new WebSocketLink({
+  uri: wsUrl,
+  options: {
+    lazy: true,
+    reconnect: true,
+    connectionParams: () => ({ accessToken: getAccessToken() }),
+  },
+});
 
 function isSubscription(operation) {
   const definition = getMainDefinition(operation.query);
