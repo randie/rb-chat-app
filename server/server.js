@@ -5,7 +5,7 @@ import { json } from 'body-parser';
 import cors from 'cors';
 import express from 'express';
 import expressJwt from 'express-jwt';
-import { sign } from 'jsonwebtoken';
+import { sign, verify } from 'jsonwebtoken';
 import { users } from './db';
 import resolvers from './resolvers';
 
@@ -24,9 +24,15 @@ app.use(
 
 const typeDefs = readFileSync('./schema.graphql', { encoding: 'utf8' });
 
-function context({ req }) {
+function context({ req, connection }) {
+  // for http (queries and mutations)
   if (req && req.user) {
     return { userId: req.user.sub };
+  }
+  // for websocket (subscriptions)
+  if (connection && connection.context && connection.context.accessToken) {
+    const decodedToken = verify(connection.context.accessToken, jwtSecret);
+    return { userId: decodedToken.sub };
   }
   return {};
 }
