@@ -4,9 +4,12 @@ import { messagesQuery, addMessageMutation, messageAddedSubscription } from './g
 import MessageInput from './message-input';
 import MessageList from './message-list';
 
-function Chat({ user }) {
+function useChatMessages() {
+  // query - get all chat messages
   const { data } = useQuery(messagesQuery);
   const messages = data ? data.messages : [];
+
+  // subscription - subscribe to new chat messages added
   useSubscription(messageAddedSubscription, {
     onSubscriptionData: ({ client, subscriptionData }) => {
       client.writeData({
@@ -14,12 +17,24 @@ function Chat({ user }) {
       });
     },
   });
+
+  // mutation - add a chat message
   const [addMessage] = useMutation(addMessageMutation);
 
+  return {
+    messages,
+    addMessage: text =>
+      addMessage({
+        variables: { input: { text } },
+      }),
+  };
+}
+
+function Chat({ user }) {
+  const { messages, addMessage } = useChatMessages();
+
   const handleSend = async text => {
-    await addMessage({
-      variables: { input: { text } },
-    });
+    await addMessage(text);
   };
 
   return (
